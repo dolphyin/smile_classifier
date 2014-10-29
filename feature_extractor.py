@@ -1,12 +1,13 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import cv2
-import os, fnmatch
+import os, fnmatch, operator
 import pdb
 
 from scipy import io
 from scipy import interpolate
 from sklearn import svm 
+from sklearn import cross_validation
 from sklearn.decomposition import PCA
 
 import util
@@ -22,6 +23,10 @@ For gabor filter variables: definitely need to include different orientations
 Try for small dataset (10 images?)
     - see what works or what doesn't
 """
+
+#TODO: do automated extraction of class values and writing into txt files
+#TODO: test for larger number of images for memory errors, in that case, write things out to disk
+#TODO: test for better hyper parameter estimation
 
 ### KEYPOINT EXTRACTION ###
 def get_keypoints(image_path, keypoint_path):
@@ -144,7 +149,47 @@ def reduce_PCA(features, n_components=162):
     print('explained variance (first %d components): %.2f'%(n_components, sum(pca.explained_variance_ratio_)))
     return reduced
 
-data = get_keypoints('./mini_data', './mini_data_out')
-training = get_gabor_training(data)
+### MACHINE LEARNING ###
+def train_svm(path, k_type='rbf', num_folds=5):
+    """
+    Trains an svm on the data loaded at path.
+    The data is of the format where the first column are the classes and the rest are features
+    """ 
+    training = np.loadtxt(path)
+    classes = training[:,0]
+    features = training[:,1:]
+   
+    c_scores = []
+    # grid search for hyper parameters
+    for i in xrange(-5, 5):
+        c = 10**i
+        clf = svm.SVC(kernel=k_type, C=c)
+        clf.fit(features, classes)
+        scores = cross_validation.cross_val_score(clf, features, classes, cv=num_folds)
+        
+        average_score = scores.mean()
+        c_scores.append((c, scores.mean(), clf))
+        print("Accuracy with c=%0.2f: %0.2f (+/- %0.2f)"%(c, scores.mean(), scores.std()*2))
+    return max(c_scores, key=operator.itemgetter(1))[2]
+
+def classify(svm, test_data):
+    """
+    Classifies test_data using the svm provide
+    """
+    return svm.predict(test_data)
+     
+
+path  = './train/train_small_final.txt'
+best_svm = train_svm(path)
+training = np.loadtxt(path)
+classes = training[:,0]
+features = training[:,1:]
+predictions = classify(best_svm, features)
+print("Accuracy: %0.2f"%(float(np.count_nonzero(predictions - classes))/len(predictions)))
+"""
+#Code to get trianing data  
+training_kp = get_keypoints('./mini_data', './mini_data_out')
+training = get_gabor_training(training_kp)
 reduced = reduce_PCA(training)
 util.write_array('./train/train_small.txt', reduced)
+"""
