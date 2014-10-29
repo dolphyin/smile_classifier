@@ -20,6 +20,13 @@ def write_image(path, img):
     """
     misc.imsave(path, img) 
 
+def write_array(path, array):
+    """
+    Writes a numpy array to file.
+    """
+    np.savetxt(path, array)
+    print("Wrote numpy array to %s"%path)
+
 def display_image(data,points=None):
     """
     Utility method to display image data
@@ -36,7 +43,7 @@ def normalize(data):
     """
     Normalizes the data
     """
-    return (data - np.amin(data))/(np.amax(data)-np.amin(data))
+    return (data - np.mean(data))/np.std(data)
 
 def overlay_SIFT(img, keypoints, dest=None):
     """
