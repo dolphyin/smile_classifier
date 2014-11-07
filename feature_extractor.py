@@ -27,6 +27,9 @@ Try for small dataset (10 images?)
 #TODO: do automated extraction of class values and writing into txt files
 #TODO: test for larger number of images for memory errors, in that case, write things out to disk
 #TODO: test for better hyper parameter estimation
+#TODO: VISUALIZE GABOR FEATURES AND EVERYITHING EMAIL SHIRY
+#TODO: get mean keyponts of our dataset from shiry, and then warp keypoints in trianing dataset to our mean keypoints
+#TODO: aligning: do everything up to warping (you don't need to warp), just need to change naming and input and output locations (CAN GET SHIRY'S HELP if needed)
 
 ### KEYPOINT EXTRACTION ###
 def get_keypoints(image_path, keypoint_path):
@@ -41,6 +44,7 @@ def get_keypoints(image_path, keypoint_path):
         name = image_names[i]
         img = util.read_image("%s/%s"%(image_path,image_names[i]))
         keypoints = io.loadmat("%s/%s"%(keypoint_path, image_names[i]), appendmat=True)['output']['pred'][0][0]
+        
         results[i] = (name, img, keypoints)
     return results
 
